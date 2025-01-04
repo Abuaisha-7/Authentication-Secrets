@@ -14,13 +14,13 @@ app.use(bodyParser.urlencoded({
 
 mongoose.connect("mongodb://localhost:27017/userDB");
 
-const userSchema = {
-    email: String,
-    password: String
-};
+const userSchema =new mongoose.Schema ({
+      email: String,
+      password: String
+    });
 
-// const secret = "Thisisourlittlesecret.";
-// userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
+const secret = "Thisisourlittlesecret.";
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
 
 const User = new mongoose.model("User", userSchema);
 
@@ -42,13 +42,15 @@ app.post("/register", function(req, res){
         password: req.body.password
     });
 
-    newUser.save()
-    .then(function(){
-        res.render("secrets");
-    }) 
-    .catch(function(err){
-        console.log(err);
-    });
+    newUser.save();
+    User.find() 
+        .then(function(users){
+            res.render("secrets", {usersWithSecrets: users});
+        })
+        .catch(function(err){
+            console.log(err);
+        });
+   
 });
 
 app.post("/login", function(req, res){
@@ -56,11 +58,11 @@ app.post("/login", function(req, res){
     const password = req.body.password;
 
     User.findOne({email: username})
-        .then(function(err, foundUser){
+        .then(function(foundUser){
     
             if (foundUser) {
                 if (foundUser.password === password) {
-                    res.render("secrets");
+                    res.render("secrets", {usersWithSecrets: [foundUser]});
                 }
             }
         
